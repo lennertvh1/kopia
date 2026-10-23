@@ -34,6 +34,7 @@ import {
   isPortableConfig,
 } from "./config.js";
 
+import { tr, registerHomeBaseHandlers } from "./homebase.js";
 import Store from "electron-store";
 import log from "electron-log";
 import path from "path";
@@ -42,7 +43,8 @@ import crypto from "crypto";
 // Store to save parameters
 const store = new Store();
 
-app.name = "KopiaUI";
+app.name = "HomeBase Back-up";
+registerHomeBaseHandlers();
 
 let tray = null;
 let repositoryWindows = {};
@@ -98,7 +100,7 @@ function showRepoWindow(repositoryID) {
   }
 
   let windowOptions = {
-    title: "KopiaUI is Loading...",
+    title: tr("HomeBase Back-up wordt geladen…"),
     // default width
     width: 1000,
     // default height
@@ -196,6 +198,8 @@ if (!app.requestSingleInstanceLock()) {
 } else {
   app.on("second-instance", (_event, _commandLine, _workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
+    // HomeBase Back-up: is er geen venster open, dan het venster tonen (de app opnieuw openen = het venster zien).
+    if (Object.keys(repositoryWindows).length === 0) showAllRepoWindows();
     for (let repositoryID in repositoryWindows) {
       let rw = repositoryWindows[repositoryID];
       if (rw.isMinimized()) {
@@ -205,6 +209,9 @@ if (!app.requestSingleInstanceLock()) {
     }
   });
 }
+
+// HomeBase Back-up: op een Mac opent een klik op het pictogram in het Dock het venster.
+app.on("activate", () => showAllRepoWindows());
 
 app.on("will-quit", function () {
   allConfigs().forEach((repositoryID) =>
@@ -300,11 +307,8 @@ autoUpdater.on("update-available", (a) => {
   if (checkForUpdatesTriggeredFromUI) {
     dialog
       .showMessageBox({
-        buttons: ["Yes", "No"],
-        message:
-          "An updated KopiaUI v" +
-          a.version +
-          " is available.\n\nDo you want to install it now?",
+        buttons: [tr("Ja"), tr("Nee")],
+        message: tr("HomeBase Back-up v{version} is beschikbaar.\n\nNu installeren?", { version: a.version }),
       })
       .then((r) => {
         if (r.response == 0) {
@@ -318,11 +322,8 @@ autoUpdater.on("update-available", (a) => {
     lastNotifiedVersion = a.version;
 
     const notification = new Notification({
-      title: "New version of KopiaUI",
-      body:
-        "Version v" +
-        a.version +
-        " is available.\n\nClick here to download and install it.",
+      title: tr("Nieuwe versie van HomeBase Back-up"),
+      body: tr("Versie v{version} is beschikbaar.\n\nKlik hier om ze te downloaden en te installeren.", { version: a.version }),
     });
 
     notification.on("click", () => installUpdate());
@@ -414,7 +415,7 @@ function viewReleaseNotes() {
       "https://github.com/kopia/kopia-test-builds/releases/v" + ver,
     );
   } else {
-    shell.openExternal("https://github.com/kopia/kopia/releases/v" + ver);
+    shell.openExternal("https://github.com/lennertvh1/kopia/releases/v" + ver);
   }
 }
 
@@ -438,9 +439,10 @@ function maybeMoveToApplicationsFolder() {
 
   dialog
     .showMessageBox({
-      buttons: ["Yes", "No"],
-      message:
-        "For best experience, Kopia needs to be installed in Applications folder.\n\nDo you want to move it now?",
+      buttons: [tr("Ja"), tr("Nee")],
+      message: tr(
+        "Voor de beste ervaring hoort HomeBase Back-up in de map Apps.\n\nNu verplaatsen?",
+      ),
     })
     .then((r) => {
       if (r.response == 0) {
@@ -511,7 +513,7 @@ app.on("ready", () => {
     ),
   );
 
-  tray.setToolTip("Kopia");
+  tray.setToolTip("HomeBase Back-up");
 
   // hooks exposed to tests
   if (process.env["KOPIA_UI_TESTING"]) {
@@ -532,15 +534,18 @@ app.on("ready", () => {
 
   allConfigs().forEach((repoID) => serverForRepo(repoID).actuateServer());
 
-  if (isFirstRun()) {
-    // open all repo windows on first run.
+  // HomeBase Back-up: het venster tonen, behalve bij het automatisch starten bij aanmelden (--hidden).
+  if (isFirstRun() || !process.argv.includes("--hidden")) {
     showAllRepoWindows();
+  }
+
+  if (isFirstRun()) {
 
     // on Windows, also show the notification.
     if (process.platform === "win32") {
       tray.displayBalloon({
-        title: "Kopia is running in the background",
-        content: "Click on the system tray icon to open the menu",
+        title: tr("HomeBase Back-up draait op de achtergrond"),
+        content: tr("Klik op het pictogram in het systeemvak om het menu te openen"),
       });
     }
   }
@@ -611,12 +616,12 @@ function updateTrayContextMenu() {
     let desc = "";
 
     if (sd.startingUp) {
-      desc = "<starting up>";
+      desc = tr("<opstarten>");
     } else if (!sd.connected) {
       if (sd.initTaskID) {
-        desc = "<initializing>";
+        desc = tr("<voorbereiden>");
       } else {
-        desc = "<not connected>";
+        desc = tr("<niet gekoppeld>");
       }
     } else {
       desc = sd.description;
@@ -649,24 +654,24 @@ function updateTrayContextMenu() {
   } else if (updateAvailableInfo) {
     if (updateFailed) {
       autoUpdateMenuItems.push({
-        label:
-          "Update Failed, click to manually download and install v" +
-          updateAvailableInfo.version,
+        label: tr("Bijwerken mislukt, klik om v{version} zelf te downloaden", {
+          version: updateAvailableInfo.version,
+        }),
         click: viewReleaseNotes,
       });
     } else {
       autoUpdateMenuItems.push({
-        label: "Update Available: v" + updateAvailableInfo.version,
+        label: tr("Nieuwe versie: v{version}", { version: updateAvailableInfo.version }),
         click: viewReleaseNotes,
       });
       autoUpdateMenuItems.push({
-        label: "Download And Install...",
+        label: tr("Downloaden en installeren…"),
         click: installUpdate,
       });
     }
   } else {
     autoUpdateMenuItems.push({
-      label: "KopiaUI is up-to-date: " + app.getVersion(),
+      label: tr("HomeBase Back-up is bijgewerkt: {version}", { version: app.getVersion() }),
       enabled: false,
     });
   }
@@ -678,46 +683,46 @@ function updateTrayContextMenu() {
     .concat([
       { type: "separator" },
       {
-        label: "Connect To Another Repository...",
+        label: tr("Met nog een opslag verbinden…"),
         click: addAnotherRepository,
       },
       { type: "separator" },
-      { label: "Check For Updates Now", click: checkForUpdatesNow },
+      { label: tr("Nu zoeken naar updates"), click: checkForUpdatesNow },
     ])
     .concat(autoUpdateMenuItems)
     .concat([
       { type: "separator" },
       {
-        label: "Launch At Startup",
+        label: tr("Starten bij aanmelden"),
         type: "checkbox",
         click: toggleLaunchAtStartup,
         checked: willLaunchAtStartup(),
       },
       {
-        label: "Notifications",
+        label: tr("Meldingen"),
         type: "submenu",
         submenu: [
           {
-            label: "Enabled",
+            label: tr("Aan"),
             type: "radio",
             click: () => setNotificationLevel(2),
             checked: nl === 2,
           },
           {
-            label: "Warnings And Errors",
+            label: tr("Alleen waarschuwingen en fouten"),
             type: "radio",
             click: () => setNotificationLevel(1),
             checked: nl === 1,
           },
           {
-            label: "Disabled",
+            label: tr("Uit"),
             type: "radio",
             click: () => setNotificationLevel(0),
             checked: nl === 0,
           },
         ],
       },
-      { label: "Quit", role: "quit" },
+      { label: tr("Stoppen"), role: "quit" },
     ]);
   tray.setContextMenu(Menu.buildFromTemplate(template));
 }

@@ -19,7 +19,7 @@ export default async function notarizing(context) {
     console.log("Still waiting for notarization response...");
   }, 30000);
   let x = await notarize({
-    appBundleId: "io.kopia.ui",
+    appBundleId: "be.homebaseos.backup",
     appPath: `${appOutDir}/${appName}.app`,
     appleApiIssuer: process.env.APPLE_API_ISSUER,
     appleApiKeyId: process.env.APPLE_API_KEY_ID,

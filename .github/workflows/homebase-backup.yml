@@ -1,0 +1,98 @@
+# HomeBase Back-up: de app (fork van KopiaUI) bouwen voor Windows, macOS en Linux.
+# Bij een tag v* komen de installers bij de release (die HomeBaseOS als downloadlink gebruikt); met de hand: alleen artefacten.
+# De interface komt uit de fork van htmlui (branch homebase), zie homebase/build-htmlui.sh.
+name: HomeBase Back-up
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: --mac --x64 --arm64
+          - os: windows-latest
+            target: --win --x64
+          - os: ubuntu-latest
+            target: --linux --x64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: kopia
+          fetch-depth: 0
+      - uses: actions/checkout@v5
+        with:
+          repository: ${{ github.repository_owner }}/htmlui
+          ref: homebase
+          path: htmlui
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: kopia/go.mod
+          cache-dependency-path: kopia/go.sum
+
+      - name: Versie
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then V="${GITHUB_REF#refs/tags/v}"; else V="0.0.0-dev.$(date +%Y%m%d%H%M)"; fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Interface bouwen
+        run: kopia/homebase/build-htmlui.sh "$GITHUB_WORKSPACE/htmlui"
+
+      - name: Kopia bouwen
+        working-directory: kopia
+        env:
+          V: ${{ steps.version.outputs.version }}
+        run: |
+          FLAGS="-s -w -X github.com/kopia/kopia/repo.BuildVersion=$V -X github.com/kopia/kopia/repo.BuildInfo=$(git rev-parse HEAD) -X github.com/kopia/kopia/repo.BuildGitHubRepo=$GITHUB_REPOSITORY"
+          case "$RUNNER_OS" in
+            macOS)
+              GOARCH=amd64 go build -trimpath -ldflags "$FLAGS" -o dist/kopia_darwin_amd64/kopia .
+              GOARCH=arm64 go build -trimpath -ldflags "$FLAGS" -o dist/kopia_darwin_arm64/kopia .
+              mkdir -p dist/kopia_darwin_universal
+              lipo -create -output dist/kopia_darwin_universal/kopia dist/kopia_darwin_amd64/kopia dist/kopia_darwin_arm64/kopia ;;
+            Windows)
+              GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "$FLAGS" -o dist/kopia_windows_amd64/kopia.exe . ;;
+            Linux)
+              GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$FLAGS" -o dist/kopia_linux_x64/kopia . ;;
+          esac
+
+      - name: App bouwen
+        working-directory: kopia/app
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          V: ${{ steps.version.outputs.version }}
+          # Zonder deze geheimen wordt de app niet ondertekend (macOS en Windows waarschuwen dan bij het installeren).
+          CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.MAC_CERT_P12 != '' }}
+        run: |
+          npm ci --no-audit --no-fund
+          npm version "$V" --no-git-tag-version --allow-same-version
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then PUBLISH=always; else PUBLISH=never; fi
+          npx electron-builder ${{ matrix.target }} --publish "$PUBLISH"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: homebase-backup-${{ runner.os }}
+          path: |
+            kopia/dist/kopia-ui/*.exe
+            kopia/dist/kopia-ui/*.dmg
+            kopia/dist/kopia-ui/*.zip
+            kopia/dist/kopia-ui/*.AppImage
+            kopia/dist/kopia-ui/*.deb
+          if-no-files-found: warn

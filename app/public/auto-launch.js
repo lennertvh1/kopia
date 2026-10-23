@@ -3,8 +3,10 @@ import log from "electron-log";
 
 import AutoLaunch from "auto-launch";
 
+// HomeBase Back-up: bij het aanmelden start de app zonder venster (--hidden), alleen in de menubalk of het systeemvak.
 const autoLauncher = new AutoLaunch({
-  name: "Kopia",
+  name: "HomeBase Back-up",
+  isHidden: true,
   mac: {
     useLaunchAgent: true,
   },
