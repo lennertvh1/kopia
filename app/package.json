@@ -13,11 +13,11 @@
   },
   "type": "module",
   "author": {
-    "name": "HomeBaseOS (gebaseerd op Kopia van de Kopia Authors)",
+    "name": "HomeBaseOS (based on Kopia by the Kopia Authors)",
     "email": "lennertvh1@users.noreply.github.com"
   },
   "build": {
-    "productName": "HomeBase Back-up",
+    "productName": "HomeBase Backup",
     "appId": "be.homebaseos.backup",
     "publish": [
       {
@@ -113,7 +113,7 @@
       ],
       "artifactName": "HomeBase-Backup-${version}-${arch}.${ext}",
       "executableName": "homebase-backup",
-      "synopsis": "Back-ups van je pc naar je HomeBaseOS",
+      "synopsis": "Backups of your PC to your HomeBaseOS",
       "category": "Utility"
     },
     "afterSign": "notarize.mjs"
@@ -140,7 +140,7 @@
     "prettier": "^3.9.9"
   },
   "homepage": "./",
-  "description": "Back-ups van je pc naar je HomeBaseOS (gebaseerd op Kopia).",
+  "description": "Backups of your PC to your HomeBaseOS (based on Kopia).",
   "license": "Apache-2.0",
   "main": "public/electron.js",
   "scripts": {

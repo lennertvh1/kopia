@@ -43,7 +43,7 @@ import crypto from "crypto";
 // Store to save parameters
 const store = new Store();
 
-app.name = "HomeBase Back-up";
+app.name = "HomeBase Backup";
 registerHomeBaseHandlers();
 
 let tray = null;
@@ -100,7 +100,7 @@ function showRepoWindow(repositoryID) {
   }
 
   let windowOptions = {
-    title: tr("HomeBase Back-up wordt geladen…"),
+    title: tr("HomeBase Backup is loading…"),
     // default width
     width: 1000,
     // default height
@@ -198,7 +198,7 @@ if (!app.requestSingleInstanceLock()) {
 } else {
   app.on("second-instance", (_event, _commandLine, _workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
-    // HomeBase Back-up: is er geen venster open, dan het venster tonen (de app opnieuw openen = het venster zien).
+    // HomeBase Backup: if no window is open, show the window (opening the app again = seeing the window).
     if (Object.keys(repositoryWindows).length === 0) showAllRepoWindows();
     for (let repositoryID in repositoryWindows) {
       let rw = repositoryWindows[repositoryID];
@@ -210,7 +210,7 @@ if (!app.requestSingleInstanceLock()) {
   });
 }
 
-// HomeBase Back-up: op een Mac opent een klik op het pictogram in het Dock het venster.
+// HomeBase Backup: on a Mac a click on the Dock icon opens the window.
 app.on("activate", () => showAllRepoWindows());
 
 app.on("will-quit", function () {
@@ -307,8 +307,8 @@ autoUpdater.on("update-available", (a) => {
   if (checkForUpdatesTriggeredFromUI) {
     dialog
       .showMessageBox({
-        buttons: [tr("Ja"), tr("Nee")],
-        message: tr("HomeBase Back-up v{version} is beschikbaar.\n\nNu installeren?", { version: a.version }),
+        buttons: [tr("Yes"), tr("No")],
+        message: tr("HomeBase Backup v{version} is available.\n\nInstall it now?", { version: a.version }),
       })
       .then((r) => {
         if (r.response == 0) {
@@ -322,8 +322,8 @@ autoUpdater.on("update-available", (a) => {
     lastNotifiedVersion = a.version;
 
     const notification = new Notification({
-      title: tr("Nieuwe versie van HomeBase Back-up"),
-      body: tr("Versie v{version} is beschikbaar.\n\nKlik hier om ze te downloaden en te installeren.", { version: a.version }),
+      title: tr("New version of HomeBase Backup"),
+      body: tr("Version v{version} is available.\n\nClick here to download and install it.", { version: a.version }),
     });
 
     notification.on("click", () => installUpdate());
@@ -439,9 +439,9 @@ function maybeMoveToApplicationsFolder() {
 
   dialog
     .showMessageBox({
-      buttons: [tr("Ja"), tr("Nee")],
+      buttons: [tr("Yes"), tr("No")],
       message: tr(
-        "Voor de beste ervaring hoort HomeBase Back-up in de map Apps.\n\nNu verplaatsen?",
+        "For the best experience, HomeBase Backup belongs in the Applications folder.\n\nMove it now?",
       ),
     })
     .then((r) => {
@@ -513,7 +513,7 @@ app.on("ready", () => {
     ),
   );
 
-  tray.setToolTip("HomeBase Back-up");
+  tray.setToolTip("HomeBase Backup");
 
   // hooks exposed to tests
   if (process.env["KOPIA_UI_TESTING"]) {
@@ -534,7 +534,7 @@ app.on("ready", () => {
 
   allConfigs().forEach((repoID) => serverForRepo(repoID).actuateServer());
 
-  // HomeBase Back-up: het venster tonen, behalve bij het automatisch starten bij aanmelden (--hidden).
+  // HomeBase Backup: show the window, except when starting automatically at sign-in (--hidden).
   if (isFirstRun() || !process.argv.includes("--hidden")) {
     showAllRepoWindows();
   }
@@ -544,8 +544,8 @@ app.on("ready", () => {
     // on Windows, also show the notification.
     if (process.platform === "win32") {
       tray.displayBalloon({
-        title: tr("HomeBase Back-up draait op de achtergrond"),
-        content: tr("Klik op het pictogram in het systeemvak om het menu te openen"),
+        title: tr("HomeBase Backup is running in the background"),
+        content: tr("Click the icon in the system tray to open the menu"),
       });
     }
   }
@@ -616,12 +616,12 @@ function updateTrayContextMenu() {
     let desc = "";
 
     if (sd.startingUp) {
-      desc = tr("<opstarten>");
+      desc = tr("<starting up>");
     } else if (!sd.connected) {
       if (sd.initTaskID) {
-        desc = tr("<voorbereiden>");
+        desc = tr("<initializing>");
       } else {
-        desc = tr("<niet gekoppeld>");
+        desc = tr("<not paired>");
       }
     } else {
       desc = sd.description;
@@ -654,24 +654,24 @@ function updateTrayContextMenu() {
   } else if (updateAvailableInfo) {
     if (updateFailed) {
       autoUpdateMenuItems.push({
-        label: tr("Bijwerken mislukt, klik om v{version} zelf te downloaden", {
+        label: tr("Update failed, click to download v{version} yourself", {
           version: updateAvailableInfo.version,
         }),
         click: viewReleaseNotes,
       });
     } else {
       autoUpdateMenuItems.push({
-        label: tr("Nieuwe versie: v{version}", { version: updateAvailableInfo.version }),
+        label: tr("Update available: v{version}", { version: updateAvailableInfo.version }),
         click: viewReleaseNotes,
       });
       autoUpdateMenuItems.push({
-        label: tr("Downloaden en installeren…"),
+        label: tr("Download and install…"),
         click: installUpdate,
       });
     }
   } else {
     autoUpdateMenuItems.push({
-      label: tr("HomeBase Back-up is bijgewerkt: {version}", { version: app.getVersion() }),
+      label: tr("HomeBase Backup is up to date: {version}", { version: app.getVersion() }),
       enabled: false,
     });
   }
@@ -683,46 +683,46 @@ function updateTrayContextMenu() {
     .concat([
       { type: "separator" },
       {
-        label: tr("Met nog een opslag verbinden…"),
+        label: tr("Connect to another storage…"),
         click: addAnotherRepository,
       },
       { type: "separator" },
-      { label: tr("Nu zoeken naar updates"), click: checkForUpdatesNow },
+      { label: tr("Check for updates now"), click: checkForUpdatesNow },
     ])
     .concat(autoUpdateMenuItems)
     .concat([
       { type: "separator" },
       {
-        label: tr("Starten bij aanmelden"),
+        label: tr("Launch at startup"),
         type: "checkbox",
         click: toggleLaunchAtStartup,
         checked: willLaunchAtStartup(),
       },
       {
-        label: tr("Meldingen"),
+        label: tr("Notifications"),
         type: "submenu",
         submenu: [
           {
-            label: tr("Aan"),
+            label: tr("On"),
             type: "radio",
             click: () => setNotificationLevel(2),
             checked: nl === 2,
           },
           {
-            label: tr("Alleen waarschuwingen en fouten"),
+            label: tr("Warnings and errors only"),
             type: "radio",
             click: () => setNotificationLevel(1),
             checked: nl === 1,
           },
           {
-            label: tr("Uit"),
+            label: tr("Off"),
             type: "radio",
             click: () => setNotificationLevel(0),
             checked: nl === 0,
           },
         ],
       },
-      { label: tr("Stoppen"), role: "quit" },
+      { label: tr("Quit"), role: "quit" },
     ]);
   tray.setContextMenu(Menu.buildFromTemplate(template));
 }

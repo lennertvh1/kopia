@@ -1,7 +1,7 @@
-# HomeBase Back-up: de app (fork van KopiaUI) bouwen voor Windows, macOS en Linux.
-# Bij een tag v* komen de installers bij de release (die HomeBaseOS als downloadlink gebruikt); met de hand: alleen artefacten.
-# De interface komt uit de fork van htmlui (branch homebase), zie homebase/build-htmlui.sh.
-name: HomeBase Back-up
+# HomeBase Backup: build the app (fork of KopiaUI) for Windows, macOS and Linux.
+# For a tag v* the installers are attached to the release (which HomeBaseOS uses as the download link); by hand: artifacts only.
+# The interface comes from the htmlui fork (branch homebase), see homebase/build-htmlui.sh.
+name: HomeBase Backup
 on:
   push:
     tags: ["v*"]
@@ -44,16 +44,16 @@ jobs:
           go-version-file: kopia/go.mod
           cache-dependency-path: kopia/go.sum
 
-      - name: Versie
+      - name: Version
         id: version
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then V="${GITHUB_REF#refs/tags/v}"; else V="0.0.0-dev.$(date +%Y%m%d%H%M)"; fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
 
-      - name: Interface bouwen
+      - name: Build the interface
         run: kopia/homebase/build-htmlui.sh "$GITHUB_WORKSPACE/htmlui"
 
-      - name: Kopia bouwen
+      - name: Build Kopia
         working-directory: kopia
         env:
           V: ${{ steps.version.outputs.version }}
@@ -71,18 +71,18 @@ jobs:
               GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$FLAGS" -o dist/kopia_linux_x64/kopia . ;;
           esac
 
-      - name: App bouwen
+      - name: Build the app
         working-directory: kopia/app
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           V: ${{ steps.version.outputs.version }}
-          # Zonder deze geheimen wordt de app niet ondertekend (macOS en Windows waarschuwen dan bij het installeren).
+          # Without these secrets the app is not signed (macOS and Windows then warn when installing).
           MAC_CERT_P12: ${{ secrets.MAC_CERT_P12 }}
           MAC_CERT_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
         run: |
-          # CSC_LINK alleen zetten als er een certificaat is: een lege waarde leest electron-builder als een pad ("not a file").
-          # Zonder certificaat op macOS: ad-hoc ondertekenen (anders klopt de handtekening van Electron niet meer en meldt
-          # macOS "beschadigd"), en zonder hardened runtime (die is alleen nodig voor notariseren bij Apple).
+          # Only set CSC_LINK when there is a certificate: electron-builder reads an empty value as a path ("not a file").
+          # Without a certificate on macOS: ad-hoc signing (otherwise Electron's signature no longer matches and macOS
+          # reports "damaged"), and without the hardened runtime (only needed for notarisation by Apple).
           EXTRA=()
           if [ -n "$MAC_CERT_P12" ]; then
             export CSC_LINK="$MAC_CERT_P12" CSC_KEY_PASSWORD="$MAC_CERT_PASSWORD"

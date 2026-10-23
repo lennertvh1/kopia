@@ -1,51 +1,51 @@
-# HomeBase Back-up
+# HomeBase Backup
 
-Deze fork van [Kopia](https://github.com/kopia/kopia) is **HomeBase Back-up**: de app die pc's en Macs elk uur een back-up laat maken naar een NAS met [HomeBaseOS](https://github.com/lennertvh1/homebaseos). Het is KopiaUI met een eigen naam, een interface in de stijl van het dashboard van HomeBaseOS (Nederlands en Engels), en koppelen met een code in plaats van adres + vingerafdruk + naam.
+This fork of [Kopia](https://github.com/kopia/kopia) is **HomeBase Backup**: the app that has PCs and Macs back up every hour to a NAS with [HomeBaseOS](https://github.com/lennertvh1/homebaseos). It is KopiaUI with its own name, an interface in the style of the HomeBaseOS dashboard (English and Dutch), and pairing with a code instead of address + fingerprint + name.
 
-Kopia valt onder de Apache License 2.0 (zie `LICENSE`). Deze fork ook. "Kopia" is de naam van het oorspronkelijke project; deze app is er niet officieel aan verbonden.
+Kopia is licensed under the Apache License 2.0 (see `LICENSE`). So is this fork. "Kopia" is the name of the original project; this app is not officially affiliated with it.
 
-## Wat is er anders dan Kopia
+## What is different from Kopia
 
-| Waar | Wijziging |
+| Where | Change |
 |---|---|
-| `htmlui-homebase/` | Vervangt de module `github.com/kopia/htmluibuild` (zie `replace` in `go.mod`): de gebouwde interface uit de fork [lennertvh1/htmlui](https://github.com/lennertvh1/htmlui), branch `homebase`. |
-| `homebase/build-htmlui.sh` | Bouwt die interface en zet ze in `htmlui-homebase/build`. |
-| `app/package.json` | Naam *HomeBase Back-up*, app-id `be.homebaseos.backup`, updates en releases uit deze fork, bestandsnamen zonder spaties. |
-| `app/public/homebase.js` | Nieuw: vertalingen (nl/en) voor menu's en meldingen, het ophalen van een koppelcode bij HomeBaseOS (`homebase-pair`) en de gewone mappen van de gebruiker (`known-folders`). |
-| `app/public/preload.js` | `kopiaUI.homebasePair()` en `kopiaUI.knownFolders()` voor de interface. |
-| `app/public/electron.js` | Naam en teksten via `tr()`; het venster opent bij een gewone start (niet bij het automatisch starten bij aanmelden, `--hidden`), bij opnieuw openen en bij een klik op het Dock. Release-notes uit deze fork. |
-| `app/public/auto-launch.js` | Naam *HomeBase Back-up*, start bij aanmelden zonder venster. |
-| `app/assets`, `app/resources`, `app/public/*.png` | Pictogrammen met het huisje van HomeBaseOS. |
-| `.github/workflows/homebase-backup.yml` | Bouwt de app voor Windows, macOS (Intel en Apple Silicon) en Linux; bij een tag `v*` komen de installers bij de release. |
-| `.github/workflows/*`, `.github/dependabot.yml` | De workflows en Dependabot van Kopia zijn weg: ze hebben geheimen van kopia/kopia nodig of openen pull requests. Alleen `homebase-backup.yml` blijft. |
+| `htmlui-homebase/` | Replaces the module `github.com/kopia/htmluibuild` (see `replace` in `go.mod`): the built interface from the fork [lennertvh1/htmlui](https://github.com/lennertvh1/htmlui), branch `homebase`. |
+| `homebase/build-htmlui.sh` | Builds that interface and puts it in `htmlui-homebase/build`. |
+| `app/package.json` | Name *HomeBase Backup*, app id `be.homebaseos.backup`, updates and releases from this fork, file names without spaces. |
+| `app/public/homebase.js` | New: translations (English key, Dutch in `NL`) for menus and notifications, fetching a pairing code from HomeBaseOS (`homebase-pair`) and the user's standard folders (`known-folders`). |
+| `app/public/preload.js` | `kopiaUI.homebasePair()` and `kopiaUI.knownFolders()` for the interface. |
+| `app/public/electron.js` | Name and texts via `tr()`; the window opens on a normal start (not when starting automatically at sign-in, `--hidden`), when opening the app again and on a click on the Dock. Release notes from this fork. |
+| `app/public/auto-launch.js` | Name *HomeBase Backup*, starts at sign-in without a window. |
+| `app/assets`, `app/resources`, `app/public/*.png` | Icons with the HomeBaseOS house. |
+| `.github/workflows/homebase-backup.yml` | Builds the app for Windows, macOS (Intel and Apple Silicon) and Linux; for a tag `v*` the installers are attached to the release. |
+| `.github/workflows/*`, `.github/dependabot.yml` | Kopia's workflows and Dependabot are gone: they need secrets of kopia/kopia or open pull requests. Only `homebase-backup.yml` stays. |
 
-De Go-code van Kopia zelf is niet gewijzigd.
+Kopia's Go code itself is unchanged.
 
-## Koppelen met HomeBaseOS
+## Pairing with HomeBaseOS
 
-1. In HomeBaseOS: *Back-ups → Toestellen → + Toestel → Met de app HomeBase Back-up*. Je krijgt een koppelcode (8 tekens, 15 minuten, eenmalig).
-2. In de app: adres van HomeBaseOS (bv. `freddy.local`) + de code. De app vraagt `GET http://<adres>:8080/api/backup/pair/<code>` op en krijgt de poort, de vingerafdruk van de server, de naam (`<toestel>@<toestel>`) en het wachtwoord. Daarmee verbindt ze met de Kopia-server op de NAS (`/api/v1/repo/connect` met `apiServer`).
-3. *Wat wil je bewaren?*: Documenten, Bureaublad en Afbeeldingen staan standaard aan. Elke map wordt een bron met het algemene beleid van de NAS (elk uur; oude versies: 10 laatste, 24 per uur, 14 dagen, 8 weken, 12 maanden, 3 jaar).
+1. In HomeBaseOS: *Backups → Devices → + Device → With the HomeBase Backup app*. You get a pairing code (8 characters, 15 minutes, one-time).
+2. In the app: the address of HomeBaseOS (e.g. `freddy.local`) + the code. The app requests `GET http://<address>:8080/api/backup/pair/<code>` and gets the port, the server's fingerprint, the name (`<device>@<device>`) and the password. With those it connects to the Kopia server on the NAS (`/api/v1/repo/connect` with `apiServer`).
+3. *What do you want to keep safe?*: Documents, Desktop and Pictures are on by default. Each folder becomes a source with the NAS's global policy (every hour; old versions: 10 latest, 24 hourly, 14 days, 8 weeks, 12 months, 3 years).
 
-## Bouwen
+## Building
 
 ```bash
-# naast elkaar: homebase-backup/kopia (deze repo) en homebase-backup/htmlui (fork, branch homebase)
+# side by side: homebase-backup/kopia (this repo) and homebase-backup/htmlui (fork, branch homebase)
 homebase/build-htmlui.sh                       # interface → htmlui-homebase/build
-go build -o dist/kopia_darwin_amd64/kopia .    # pad dat de app in ontwikkelmodus gebruikt (ook op Apple Silicon)
-cd app && npm ci && npx electron .             # app starten (zet ELECTRON_RUN_AS_NODE niet, bv. vanuit VS Code: env -u ELECTRON_RUN_AS_NODE)
-npx electron-builder --mac dmg --arm64 --publish never   # installer; Windows en Linux bouwt de workflow
+go build -o dist/kopia_darwin_amd64/kopia .    # the path the app uses in development mode (also on Apple Silicon)
+cd app && npm ci && npx electron .             # start the app (don't set ELECTRON_RUN_AS_NODE, e.g. from VS Code: env -u ELECTRON_RUN_AS_NODE)
+npx electron-builder --mac dmg --arm64 --publish never   # installer; the workflow builds Windows and Linux
 ```
 
-Een release: tag `vX.Y.Z` op deze branch pushen. Zonder de geheimen `MAC_CERT_P12`/`MAC_CERT_PASSWORD` (macOS) en een Windows-certificaat is de app niet ondertekend: macOS opent ze dan via rechtsklik → Open, Windows toont SmartScreen.
+A release: push a tag `vX.Y.Z` on this branch. Without the secrets `MAC_CERT_P12`/`MAC_CERT_PASSWORD` (macOS) and a Windows certificate the app is not signed: macOS then opens it via right-click → Open, Windows shows SmartScreen.
 
-## Kopia bijwerken
+## Updating Kopia
 
 ```bash
-git remote add upstream https://github.com/kopia/kopia.git   # eenmalig
-git fetch upstream && git rebase upstream/master             # op branch homebase
+git remote add upstream https://github.com/kopia/kopia.git   # once
+git fetch upstream && git rebase upstream/master             # on branch homebase
 ```
 
-`replace` in `go.mod` en de bestanden hierboven zijn de enige plaatsen waar conflicten kunnen komen. Past Kopia een workflow aan die hier weg is, dan geeft de rebase een conflict "deleted by us": los het op met `git rm <bestand>` en `git rebase --continue`.
+`replace` in `go.mod` and the files above are the only places where conflicts can arise. If Kopia changes a workflow that is gone here, the rebase gives a "deleted by us" conflict: resolve it with `git rm <file>` and `git rebase --continue`.
 
-Workflows met een schema draaien op de standaardbranch van de fork. Maak daarom `homebase` de standaardbranch (Settings → Branches), dan draait er niets van Kopia meer, ook niet vanuit `master`.
+Scheduled workflows run on the fork's default branch. So make `homebase` the default branch (Settings → Branches); then nothing of Kopia runs anymore, not even from `master`.
