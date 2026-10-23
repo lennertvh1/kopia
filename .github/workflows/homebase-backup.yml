@@ -77,10 +77,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           V: ${{ steps.version.outputs.version }}
           # Zonder deze geheimen wordt de app niet ondertekend (macOS en Windows waarschuwen dan bij het installeren).
-          CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
-          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.MAC_CERT_P12 != '' }}
+          MAC_CERT_P12: ${{ secrets.MAC_CERT_P12 }}
+          MAC_CERT_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
         run: |
+          # CSC_LINK alleen zetten als er een certificaat is: een lege waarde leest electron-builder als een pad ("not a file").
+          if [ -n "$MAC_CERT_P12" ]; then
+            export CSC_LINK="$MAC_CERT_P12" CSC_KEY_PASSWORD="$MAC_CERT_PASSWORD"
+          else
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+          fi
           npm ci --no-audit --no-fund
           npm version "$V" --no-git-tag-version --allow-same-version
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then PUBLISH=always; else PUBLISH=never; fi
