@@ -81,15 +81,20 @@ jobs:
           MAC_CERT_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
         run: |
           # CSC_LINK alleen zetten als er een certificaat is: een lege waarde leest electron-builder als een pad ("not a file").
+          # Zonder certificaat op macOS: ad-hoc ondertekenen (anders klopt de handtekening van Electron niet meer en meldt
+          # macOS "beschadigd"), en zonder hardened runtime (die is alleen nodig voor notariseren bij Apple).
+          EXTRA=()
           if [ -n "$MAC_CERT_P12" ]; then
             export CSC_LINK="$MAC_CERT_P12" CSC_KEY_PASSWORD="$MAC_CERT_PASSWORD"
+          elif [ "$RUNNER_OS" = macOS ]; then
+            EXTRA=(-c.mac.identity=- -c.mac.hardenedRuntime=false)
           else
             export CSC_IDENTITY_AUTO_DISCOVERY=false
           fi
           npm ci --no-audit --no-fund
           npm version "$V" --no-git-tag-version --allow-same-version
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then PUBLISH=always; else PUBLISH=never; fi
-          npx electron-builder ${{ matrix.target }} --publish "$PUBLISH"
+          npx electron-builder ${{ matrix.target }} "${EXTRA[@]}" --publish "$PUBLISH"
 
       - uses: actions/upload-artifact@v5
         with:
