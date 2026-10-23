@@ -37,7 +37,7 @@ cd app && npm ci && npx electron .             # start the app (don't set ELECTR
 npx electron-builder --mac dmg --arm64 --publish never   # installer; the workflow builds Windows and Linux
 ```
 
-A release: push a tag `vX.Y.Z` on this branch. Without the secrets `MAC_CERT_P12`/`MAC_CERT_PASSWORD` (macOS) and a Windows certificate the app is not signed: macOS then opens it via right-click → Open, Windows shows SmartScreen.
+**Branches:** work happens on `dev` (in this repo and in the htmlui fork); `homebase` only holds official versions. A push to `dev` builds test installers as artifacts of the run (with the interface from htmlui's `dev` branch), never a release. A release: merge `dev` into `homebase` (in both forks), then push a tag `vX.Y.Z` on `homebase`; the workflow refuses tags that aren't on `homebase`. Without the secrets `MAC_CERT_P12`/`MAC_CERT_PASSWORD` (macOS) and a Windows certificate the app is not signed: macOS then opens it via right-click → Open, Windows shows SmartScreen.
 
 ## Updating Kopia
 
