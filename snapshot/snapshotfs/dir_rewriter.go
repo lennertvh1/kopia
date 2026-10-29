@@ -6,7 +6,9 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"path"
+	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -163,9 +165,13 @@ func (rw *DirRewriter) processDirectoryEntries(ctx context.Context, parentPath s
 	for _, child := range entries {
 		if wg.CanShareWork(rw.ws) {
 			// see if we can run this child in a goroutine
+			childPath := filepath.Join(parentPath, child.Name)
+			if !strings.HasPrefix(childPath, filepath.Clean(parentPath)+string(filepath.Separator)) {
+				return nil, errors.Errorf("invalid path: path traversal detected in %s", child.Name)
+			}
 			wg.RunAsync(rw.ws, rw.processRequest, &dirRewriterRequest{
 				ctx,
-				path.Join(parentPath, child.Name),
+				childPath,
 				child,
 				nil,
 				metadataComp,
@@ -176,7 +182,11 @@ func (rw *DirRewriter) processDirectoryEntries(ctx context.Context, parentPath s
 		}
 
 		// run in current goroutine
-		replacement, repErr := rw.getCachedReplacement(ctx, path.Join(parentPath, child.Name), child, metadataComp)
+		childPath := filepath.Join(parentPath, child.Name)
+		if !strings.HasPrefix(childPath, filepath.Clean(parentPath)+string(filepath.Separator)) {
+			return nil, errors.Errorf("invalid path: path traversal detected in %s", child.Name)
+		}
+		replacement, repErr := rw.getCachedReplacement(ctx, childPath, child, metadataComp)
 		if repErr != nil {
 			return nil, errors.Wrap(repErr, child.Name)
 		}
